@@ -197,7 +197,14 @@ impl<T: ?Sized> CpuAccessibleBuffer<T> {
                                     AllocLayout::Linear,
                                     MappingRequirement::Map,
                                     DedicatedAlloc::Buffer(&buffer),
-                                    |_| AllocFromRequirementsFilter::Allowed)?;
+                                    |m| {
+                                        if m.is_host_cached() {
+                                            AllocFromRequirementsFilter::Preferred
+                                        } else {
+                                            AllocFromRequirementsFilter::Allowed
+                                        }
+//                                        AllocFromRequirementsFilter::Allowed
+                                    })?;
         debug_assert!((mem.offset() % mem_reqs.alignment) == 0);
         debug_assert!(mem.mapped_memory().is_some());
         buffer.bind_memory(mem.memory(), mem.offset())?;
